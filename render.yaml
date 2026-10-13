@@ -13,7 +13,9 @@ services:
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
       - key: APP_URL
-        value: https://xxxr.onrender.com
+        value: https://www.xxxr.online
+      - key: APP_ALLOWED_ORIGINS
+        value: https://www.xxxr.online,https://xxxr.online,https://xxxr.onrender.com
       - key: DATABASE_URL
         sync: false
       - key: DATABASE_URL_UNPOOLED

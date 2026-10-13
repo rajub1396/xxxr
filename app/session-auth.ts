@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { createHash, randomBytes } from 'node:crypto';
 import { getPool } from '../db/pool.mjs';
+import { isAllowedOrigin } from '../lib/request-origin.mjs';
 export const SESSION_COOKIE = 'redx_session';
 export type User = { userId: string; email: string; admin: boolean };
 const digest = (token: string) => createHash('sha256').update(token).digest('hex');
@@ -24,6 +25,6 @@ export async function deleteSession() {
   jar.delete(SESSION_COOKIE);
 }
 export function validOrigin(req: Request) {
-  return req.headers.get('origin') === (process.env.APP_URL || new URL(req.url).origin);
+  return isAllowedOrigin(req, { appUrl: process.env.APP_URL, allowedOrigins: process.env.APP_ALLOWED_ORIGINS });
 }
 export { safeReturnTo } from '../lib/navigation.mjs';
