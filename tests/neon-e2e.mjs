@@ -41,6 +41,13 @@ try {
   assert.equal((await pool.query('SELECT count(*)::int AS count FROM videos WHERE id=$1', [videoId])).rows[0].count, 1);
   const listed = (await request('/api/videos')).data;
   assert.ok(listed.some(item => item.id === videoId)); assert.ok(listed.every(item => !('embed' in item)));
+  assert.match(listed.find(item => item.id === videoId).thumbnail, /^https:\/\/i\.ytimg\.com\//);
+  const customPreview = 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg';
+  await request(`/api/videos/${videoId}`, { method: 'PATCH', cookie: adminCookie, body: { thumbnail: customPreview } });
+  assert.equal((await request('/api/videos')).data.find(item => item.id === videoId).thumbnail, customPreview);
+  await request(`/api/videos/${videoId}`, { method: 'PATCH', cookie: adminCookie, body: { thumbnail: 'https://127.0.0.1/private' }, expected: 400 });
+  await request(`/api/videos/${videoId}`, { method: 'PATCH', cookie: memberCookie, body: { thumbnail: customPreview }, expected: 403 });
+  console.log('PASS automatic previews, custom-image updates, and preview permissions');
   await request(`/api/videos/${videoId}`, { expected: 403 });
   await request(`/api/videos/${videoId}`, { cookie: memberCookie, expected: 403 });
   console.log('PASS video create/read persistence and premium URL protection');

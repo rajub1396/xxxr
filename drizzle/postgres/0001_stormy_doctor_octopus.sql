@@ -1,0 +1,1 @@
+ALTER TABLE "videos" ADD COLUMN "thumbnail" text DEFAULT '' NOT NULL;

@@ -2,6 +2,7 @@ import { getUser, validOrigin } from '../../session-auth';
 import { getDb } from '../../../db';
 import { videos, members } from '../../../db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { resolvePreview, youtubePreview } from '../../../lib/video-preview.mjs';
 export const dynamic = 'force-dynamic';
 const reply = (body: unknown, status=200) => Response.json(body, {status, headers:{'Cache-Control':'no-store'}});
 function normalizeEmbed(input: string) {
@@ -35,19 +36,29 @@ async function handle(req: Request) {
   if(req.method==='GET' && path[0]==='me') return reply({email:user?.email??null,admin,premium});
   if(req.method==='GET' && path[0]==='videos') {
    if(path[1]) { const v=(await db.select().from(videos).where(eq(videos.id,path[1])))[0]; if(!v) return reply({error:'Video not found'},404); if(v.premium && !premium) return reply({error:'Premium access required. Contact the admin to activate your membership.'},403); return reply(v); }
-   const all=await db.select().from(videos).orderBy(desc(videos.created)); return reply(all.map(({embed,...v})=>v));
+   const all=await db.select().from(videos).orderBy(desc(videos.created)); return reply(all.map(({embed,...v})=>({...v,thumbnail:v.thumbnail || youtubePreview(embed) || '/video-placeholder.svg'})));
   }
   if(!admin) return reply({error:'Admin access required'},403);
   if(req.method!=='GET' && !validOrigin(req)) return reply({error:'Invalid origin'},403);
   if(req.method==='GET' && path[0]==='members') return reply(await db.select({id:members.id,email:members.email,premium:members.premium}).from(members));
   if(req.method==='POST' && path[0]==='videos') {
    const b=await req.json() as Record<string, unknown>; if(typeof b.title!=='string'||!b.title.trim()||b.title.length>120||typeof b.embed!=='string') return reply({error:'Enter a title and valid video URL.'},400);
-   const v={id:crypto.randomUUID(),title:b.title.trim(),description:String(b.description||'').slice(0,1000),category:String(b.category||'General').slice(0,40),embed:normalizeEmbed(b.embed),premium:b.premium?1:0,created:Date.now()};
+   const embed=normalizeEmbed(b.embed);
+   const v={id:crypto.randomUUID(),title:b.title.trim(),description:String(b.description||'').slice(0,1000),category:String(b.category||'General').slice(0,40),embed,thumbnail:await resolvePreview(embed,b.thumbnail),premium:b.premium?1:0,created:Date.now()};
    await db.insert(videos).values(v); return reply({id:v.id},201);
+  }
+  if(req.method==='PATCH' && path[0]==='videos' && path[1]) {
+   const existing=(await db.select().from(videos).where(eq(videos.id,path[1])))[0];
+   if(!existing) return reply({error:'Video not found'},404);
+   const body=await req.json() as Record<string,unknown>;
+   if(typeof body.thumbnail!=='string') return reply({error:'Enter a preview image URL or leave it empty for automatic detection.'},400);
+   const thumbnail=await resolvePreview(existing.embed,body.thumbnail);
+   await db.update(videos).set({thumbnail}).where(eq(videos.id,existing.id));
+   return reply({ok:true,thumbnail:thumbnail || '/video-placeholder.svg'});
   }
   if(req.method==='DELETE' && path[0]==='videos' && path[1]) {await db.delete(videos).where(eq(videos.id,path[1]));return reply({ok:true});}
   if(req.method==='PATCH' && path[0]==='members' && path[1]) {const b=await req.json() as Record<string, unknown>; await db.update(members).set({premium:b.premium?1:0}).where(eq(members.id,path[1]));return reply({ok:true});}
   return reply({error:'Not found'},404);
- } catch(e) { console.error(e); return reply({error:e instanceof Error && /video|YouTube|Vimeo|HTTPS/.test(e.message)?e.message:'Unable to complete request. Please try again.'},400); }
+ } catch(e) { console.error('Video request failed'); return reply({error:e instanceof Error && /video|YouTube|Vimeo|HTTPS|Preview/.test(e.message)?e.message:'Unable to complete request. Please try again.'},400); }
 }
 export const GET=handle, POST=handle, PATCH=handle, DELETE=handle;

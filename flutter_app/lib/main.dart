@@ -283,7 +283,8 @@ class _Library extends State<Library> {
     final title = TextEditingController(),
         link = TextEditingController(),
         description = TextEditingController(),
-        category = TextEditingController(text: 'General');
+        category = TextEditingController(text: 'General'),
+        thumbnail = TextEditingController();
     bool premium = false, busy = false;
     String message = '';
     await showDialog(
@@ -315,6 +316,14 @@ class _Library extends State<Library> {
                     controller: description,
                     maxLines: 3,
                     decoration: const InputDecoration(labelText: 'Description'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: thumbnail,
+                    decoration: const InputDecoration(
+                      labelText: 'Preview image URL (optional)',
+                      hintText: 'Leave empty for automatic detection',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -354,6 +363,7 @@ class _Library extends State<Library> {
                           data: {
                             'title': title.text,
                             'embed': link.text,
+                            'thumbnail': thumbnail.text,
                             'description': description.text,
                             'category': category.text,
                             'premium': premium,
@@ -379,6 +389,7 @@ class _Library extends State<Library> {
     link.dispose();
     description.dispose();
     category.dispose();
+    thumbnail.dispose();
   }
 
   Future<void> deleteVideo(dynamic v) async {
@@ -829,6 +840,20 @@ class _Library extends State<Library> {
                                                 ),
                                                 child: Stack(
                                                   children: [
+                                                    Positioned.fill(
+                                                      child: Image.network(
+                                                        v['thumbnail'] ?? '/video-placeholder.svg',
+                                                        fit: BoxFit.cover,
+                                                        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                                                        semanticLabel: '${v['title']} video preview',
+                                                        errorBuilder: (_, error, stack) => const Center(
+                                                          child: Text('Preview unavailable', style: TextStyle(color: Colors.white54)),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const Positioned.fill(
+                                                      child: DecoratedBox(decoration: BoxDecoration(color: Color(0x22000000))),
+                                                    ),
                                                     Center(
                                                       child: Icon(
                                                         v['premium'] == 1 &&
