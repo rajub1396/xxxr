@@ -1,28 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { getPool } from '../db/pool.mjs';
+import { createPool } from '../db/pool.mjs';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { fileURLToPath } from 'node:url';
 import { hashPassword } from '../lib/passwords.mjs';
-const pool = getPool();
+const pool = createPool(process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL);
 try {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS members (
-      id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE,
-      premium INTEGER NOT NULL DEFAULT 0 CHECK (premium IN (0,1)),
-      password_hash TEXT NOT NULL, admin BOOLEAN NOT NULL DEFAULT FALSE
-    );
-    CREATE TABLE IF NOT EXISTS videos (
-      id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL,
-      category TEXT NOT NULL, embed TEXT NOT NULL,
-      premium INTEGER NOT NULL DEFAULT 0 CHECK (premium IN (0,1)), created BIGINT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS sessions (
-      token_hash TEXT PRIMARY KEY, member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-      expires_at TIMESTAMPTZ NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
-    CREATE TABLE IF NOT EXISTS auth_limits (
-      key TEXT PRIMARY KEY, attempts INTEGER NOT NULL, resets_at TIMESTAMPTZ NOT NULL
-    );
-  `);
+  const connection = new URL(process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL);
+  if (connection.hostname.includes('-pooler.')) throw new Error('Migrations require DATABASE_URL_UNPOOLED.');
+  await migrate(drizzle(pool), { migrationsFolder: fileURLToPath(new URL('../drizzle/postgres', import.meta.url)) });
   const email = (process.env.ADMIN_EMAIL || 'rajuit1396@gmail.com').trim().toLowerCase();
   const existing = await pool.query('SELECT id, admin FROM members WHERE email=$1', [email]);
   if (!existing.rowCount) {

@@ -16,6 +16,8 @@ services:
         value: https://xxxr.onrender.com
       - key: DATABASE_URL
         sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
       - key: ADMIN_EMAIL
         value: rajuit1396@gmail.com
       - key: ADMIN_INITIAL_PASSWORD
