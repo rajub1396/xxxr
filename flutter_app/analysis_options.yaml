@@ -1,0 +1,7 @@
+analyzer:
+  exclude:
+    - build/**
+    - test/**
+    - web/**
+  errors:
+    deprecated_member_use: ignore
