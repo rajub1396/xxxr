@@ -5,8 +5,15 @@ import { eq, desc } from 'drizzle-orm';
 export const dynamic = 'force-dynamic';
 const reply = (body: unknown, status=200) => Response.json(body, {status, headers:{'Cache-Control':'no-store'}});
 function normalizeEmbed(input: string) {
- const u = new URL(input.trim());
+ let value = input.trim();
+ if (value.toLowerCase().startsWith('<iframe')) {
+  const match = value.match(/\bsrc\s*=\s*(["'])(.*?)\1/i);
+  if (!match) throw Error('The iframe must contain an HTTPS video src URL.');
+  value = match[2].replace(/&amp;/g, '&');
+ }
+ const u = new URL(value);
  if(u.protocol !== 'https:') throw Error('Use an HTTPS video link.');
+ if (u.username || u.password || u.port || !u.hostname.includes('.') || u.hostname.endsWith('.local') || u.hostname.endsWith('.localhost') || /^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) || u.hostname.includes(':')) throw Error('Use a public HTTPS video host without credentials or a custom port.');
  if(['youtube.com','www.youtube.com','m.youtube.com','youtu.be','www.youtube-nocookie.com'].includes(u.hostname)) {
   const id = u.hostname === 'youtu.be' ? u.pathname.slice(1) : u.searchParams.get('v') || u.pathname.split('/').pop();
   if(!id || !/^[\w-]{11}$/.test(id)) throw Error('Invalid YouTube video link.');
@@ -16,7 +23,7 @@ function normalizeEmbed(input: string) {
   const id=u.pathname.split('/').pop(); if(!id || !/^\d+$/.test(id)) throw Error('Invalid Vimeo video link.');
   return `https://player.vimeo.com/video/${id}`;
  }
- throw Error('Use a YouTube or Vimeo video URL.');
+ return u.href;
 }
 async function handle(req: Request) {
  try {

@@ -31,8 +31,89 @@ class RedX extends StatelessWidget {
         filled: true,
       ),
     ),
-    home: const Library(),
+    home: const AgeConfirmation(),
   );
+}
+
+class AgeConfirmation extends StatefulWidget {
+  const AgeConfirmation({super.key});
+  @override
+  State<AgeConfirmation> createState() => _AgeConfirmationState();
+}
+
+class _AgeConfirmationState extends State<AgeConfirmation> {
+  bool accepted = html.window.sessionStorage['redx-age-confirmed'] == 'yes';
+  @override
+  Widget build(BuildContext context) {
+    if (accepted) return const Library();
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: const Color(0xff181a22),
+                border: Border.all(color: const Color(0xff36303a)),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.lock_outline, size: 44, color: red),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'REDX 18+',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'For adults only',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'This video library is intended for adults. By entering, you confirm that you are at least 18 years old and meet the minimum age requirement where you live.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white60, height: 1.6),
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        html.window.sessionStorage['redx-age-confirmed'] =
+                            'yes';
+                        setState(() => accepted = true);
+                      },
+                      child: const Text('I am 18 or older — Enter'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () =>
+                        html.window.location.assign('https://www.google.com'),
+                    child: const Text('Leave this site'),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Free browsing. Sign in for premium access.',
+                    style: TextStyle(fontSize: 12, color: Colors.white38),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 Future<dynamic> api(
@@ -140,6 +221,11 @@ class _Library extends State<Library> {
           ..title = full['title']
           ..allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen'
           ..setAttribute('allowfullscreen', '')
+          ..setAttribute(
+            'sandbox',
+            'allow-scripts allow-same-origin allow-presentation',
+          )
+          ..setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
           ..style.border = '0'
           ..style.width = '100%'
           ..style.height = '100%';
@@ -220,8 +306,8 @@ class _Library extends State<Library> {
                   TextField(
                     controller: link,
                     decoration: const InputDecoration(
-                      labelText: 'YouTube or Vimeo link',
-                      hintText: 'https://www.youtube.com/watch?v=...',
+                      labelText: 'HTTPS embed URL or iframe code',
+                      hintText: 'https://provider.example/embed/video-id',
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -279,7 +365,7 @@ class _Library extends State<Library> {
                       } catch (e) {
                         update(() {
                           busy = false;
-                          message = 'Could not publish. Use a valid YouTube or Vimeo HTTPS URL.';
+                          message = 'Could not publish. Use a public HTTPS embed URL or iframe code.';
                         });
                       }
                     },
@@ -561,7 +647,7 @@ class _Library extends State<Library> {
                                     Icon(Icons.bolt, color: red, size: 18),
                                     SizedBox(width: 8),
                                     Text(
-                                      'THE REDX COLLECTION',
+                                      'THE REDX 18+ COLLECTION',
                                       style: TextStyle(
                                         color: red,
                                         fontWeight: FontWeight.bold,
@@ -572,7 +658,7 @@ class _Library extends State<Library> {
                                 ),
                                 const SizedBox(height: 24),
                                 Text(
-                                  'Press play.\nFind something great.',
+                                  'Your private escape.\nPress play.',
                                   style: TextStyle(
                                     fontSize: wide ? 54 : 34,
                                     fontWeight: FontWeight.w800,
@@ -581,7 +667,7 @@ class _Library extends State<Library> {
                                 ),
                                 const SizedBox(height: 20),
                                 const Text(
-                                  'One place for your favorite videos.\nDiscover free picks and unlock the premium collection.',
+                                  'A video collection for adults.\nBrowse free videos or unlock the premium collection.',
                                   style: TextStyle(
                                     color: Colors.white60,
                                     fontSize: 16,
@@ -852,7 +938,7 @@ class _Library extends State<Library> {
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 20),
                           child: Text(
-                            'REDX  /  A better place to press play.',
+                            'REDX 18+  /  For adults only.',
                             style: TextStyle(
                               color: Colors.white38,
                               fontSize: 12,

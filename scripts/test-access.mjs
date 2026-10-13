@@ -9,8 +9,13 @@ const js=ts.transpile(source,{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind
 const {handle,normalizeEmbed}=new Function('getChatGPTUser','getDb','videos','members','eq','desc',js)(async()=>identity,()=>db,'videos','members',()=>true,()=>true);
 assert.equal(normalizeEmbed('https://youtu.be/abcdefghijk'),'https://www.youtube-nocookie.com/embed/abcdefghijk');
 assert.throws(()=>normalizeEmbed('javascript:alert(1)'));
-assert.throws(()=>normalizeEmbed('https://evil.example/embed/test'));
-assert.throws(()=>normalizeEmbed('https://youtube.com.evil.example/embed/abcdefghijk'));
+assert.equal(normalizeEmbed('https://provider.example/embed/test'),'https://provider.example/embed/test');
+assert.equal(normalizeEmbed('<iframe src="https://provider.example/embed/test?a=1&amp;b=2" onload="alert(1)"></iframe>'),'https://provider.example/embed/test?a=1&b=2');
+assert.throws(()=>normalizeEmbed('<iframe onload="alert(1)"></iframe>'));
+assert.throws(()=>normalizeEmbed('http://provider.example/embed/test'));
+assert.throws(()=>normalizeEmbed('https://localhost/embed/test'));
+assert.throws(()=>normalizeEmbed('https://192.168.1.1/embed/test'));
+assert.throws(()=>normalizeEmbed('https://user:password@provider.example/embed/test'));
 const request=(p,method='GET')=>new Request('https://redx.example/api/'+p,{method});
 assert.equal((await handle(request('videos/v1'))).status,403);
 assert.equal((await handle(request('videos/v1','DELETE'))).status,403);
