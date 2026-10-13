@@ -1,3 +1,3 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-export const videos = sqliteTable('videos', { id: text('id').primaryKey(), title: text('title').notNull(), description: text('description').notNull(), category: text('category').notNull(), embed: text('embed').notNull(), premium: integer('premium').notNull().default(0), created: integer('created').notNull() });
-export const members = sqliteTable('members', { id: text('id').primaryKey(), email: text('email').notNull(), premium: integer('premium').notNull().default(0) });
+import { bigint, boolean, integer, pgTable, text } from 'drizzle-orm/pg-core';
+export const videos = pgTable('videos', { id: text('id').primaryKey(), title: text('title').notNull(), description: text('description').notNull(), category: text('category').notNull(), embed: text('embed').notNull(), premium: integer('premium').notNull().default(0), created: bigint('created', { mode: 'number' }).notNull() });
+export const members = pgTable('members', { id: text('id').primaryKey(), email: text('email').notNull().unique(), premium: integer('premium').notNull().default(0), passwordHash: text('password_hash').notNull(), admin: boolean('admin').notNull().default(false) });

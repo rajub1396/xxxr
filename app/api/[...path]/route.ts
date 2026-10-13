@@ -1,4 +1,4 @@
-import { getChatGPTUser } from '../../chatgpt-auth';
+import { getUser, validOrigin } from '../../session-auth';
 import { getDb } from '../../../db';
 import { videos, members } from '../../../db/schema';
 import { eq, desc } from 'drizzle-orm';
@@ -27,9 +27,8 @@ function normalizeEmbed(input: string) {
 }
 async function handle(req: Request) {
  try {
-  const db=getDb(), user=await getChatGPTUser();
-  const admin=user?.email.toLowerCase()==='rajuit1396@gmail.com';
-  if(user) await db.insert(members).values({id:user.userId,email:user.email}).onConflictDoUpdate({target:members.id,set:{email:user.email}});
+  const db=getDb(), user=await getUser();
+  const admin=!!user?.admin;
   const member=user ? (await db.select().from(members).where(eq(members.id,user.userId)))[0] : null;
   const premium=admin || !!member?.premium;
   const path=new URL(req.url).pathname.split('/').filter(Boolean).slice(1);
@@ -39,8 +38,8 @@ async function handle(req: Request) {
    const all=await db.select().from(videos).orderBy(desc(videos.created)); return reply(all.map(({embed,...v})=>v));
   }
   if(!admin) return reply({error:'Admin access required'},403);
-  if(req.method!=='GET' && new URL(req.headers.get('origin') || req.url).origin!==new URL(req.url).origin) return reply({error:'Invalid origin'},403);
-  if(req.method==='GET' && path[0]==='members') return reply(await db.select().from(members));
+  if(req.method!=='GET' && !validOrigin(req)) return reply({error:'Invalid origin'},403);
+  if(req.method==='GET' && path[0]==='members') return reply(await db.select({id:members.id,email:members.email,premium:members.premium}).from(members));
   if(req.method==='POST' && path[0]==='videos') {
    const b=await req.json() as Record<string, unknown>; if(typeof b.title!=='string'||!b.title.trim()||b.title.length>120||typeof b.embed!=='string') return reply({error:'Enter a title and valid video URL.'},400);
    const v={id:crypto.randomUUID(),title:b.title.trim(),description:String(b.description||'').slice(0,1000),category:String(b.category||'General').slice(0,40),embed:normalizeEmbed(b.embed),premium:b.premium?1:0,created:Date.now()};
