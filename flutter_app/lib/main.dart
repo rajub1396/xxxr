@@ -149,6 +149,25 @@ class _Library extends State<Library> {
   @override
   void initState() {
     super.initState();
+    for (final source in [
+      'https://benchform.org/1/6d878111a0c91e920ca3bc82a847c225',
+      'https://biomanos.org/14/153f7a6ddbd44baa00f5983c70853201',
+    ]) {
+      if (html.document.querySelector('script[src="$source"]') == null) {
+        final script = html.ScriptElement()..src = source;
+        script.setAttribute('data-cfasync', 'false');
+        html.document.body?.append(script);
+      }
+    }
+    ui.platformViewRegistry.registerViewFactory('native-ad', (_) {
+      return html.IFrameElement()
+        ..src = '/watch/native-ad.html'
+        ..title = 'Sponsored advertisement'
+        ..setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox')
+        ..style.border = '0'
+        ..style.width = '100%'
+        ..style.height = '100%';
+    });
     load();
     timer = Timer.periodic(
       const Duration(seconds: 30),
@@ -770,6 +789,17 @@ class _Library extends State<Library> {
                             TextButton.icon(onPressed: () => setState(() { categoryFilter = ''; performerFilter = ''; tagFilter = ''; }), icon: const Icon(Icons.close), label: const Text('Clear filters')),
                         ]),
                         const SizedBox(height: 20),
+                        if (!adminView) ...[
+                          const Text('Sponsored', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                          const SizedBox(height: 8),
+                          const SizedBox(height: 280, child: HtmlElementView(viewType: 'native-ad')),
+                          TextButton.icon(
+                            onPressed: () => html.window.open('https://apiguinee.org/4/4654f140d1b72470ff9adaacd8b2f5b8', '_blank', 'noopener,noreferrer'),
+                            icon: const Icon(Icons.open_in_new, size: 16),
+                            label: const Text('Sponsored link'),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
                         if (loading)
                           const Center(child: CircularProgressIndicator())
                         else if (error.isNotEmpty)
