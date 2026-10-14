@@ -155,6 +155,8 @@ class _Library extends State<Library> {
   int videoPage = 0;
   static const videosPerPage = 30;
   final videoGridKey = GlobalKey();
+  double nativeAdHeight = 280;
+  StreamSubscription<html.Event>? nativeAdSizeMessages;
   @override
   void initState() {
     super.initState();
@@ -162,18 +164,21 @@ class _Library extends State<Library> {
       if (!mounted) return;
       setState(() => adsReady = true);
     });
-    for (final viewType in ['native-ad', 'native-banner-ad']) {
-    ui.platformViewRegistry.registerViewFactory(viewType, (viewId) {
-      final frame = html.IFrameElement()
-        ..src = viewType == 'native-ad' ? '/watch/native-ad.html' : '/watch/native-ad.html?placement=native&slot=$viewId'
-        ..title = 'Sponsored advertisement'
-        ..setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox')
-        ..style.border = '0'
+    ui.platformViewRegistry.registerViewFactory('native-ad', (_) {
+      final wrapper = html.DivElement()
+        ..id = 'xxxr-native-slot'
         ..style.width = '100%'
-        ..style.height = '100%';
-      return frame;
+        ..style.height = '100%'
+        ..style.overflow = 'hidden';
+      wrapper.append(html.DivElement()..id = 'container-d82e2ef4e500984773e34fa088c1400a');
+      return wrapper;
     });
-    }
+    nativeAdSizeMessages = html.window.on['xxxr-native-ad-size'].listen((event) {
+      if (event is! html.CustomEvent || event.detail is! String) return;
+      final height = double.tryParse(event.detail as String);
+      if (!mounted || height == null || !height.isFinite || height < 100 || height > 1600 || (height - nativeAdHeight).abs() < 1) return;
+      setState(() => nativeAdHeight = height);
+    });
     adScrollMessages = html.window.on['xxxr-ad-scroll'].listen((event) {
       if (event is! html.CustomEvent || event.detail is! String) return;
       final delta = double.tryParse(event.detail as String);
@@ -193,6 +198,7 @@ class _Library extends State<Library> {
     timer?.cancel();
     adTimer?.cancel();
     adScrollMessages?.cancel();
+    nativeAdSizeMessages?.cancel();
     libraryScroll.dispose();
     super.dispose();
   }
@@ -239,7 +245,7 @@ class _Library extends State<Library> {
   );
   void selectVideo(dynamic video) {
     try {
-      html.window.open(smartlink, '_blank', 'noopener,noreferrer');
+      html.window.open(smartlink, '_blank', 'noopener');
     } catch (_) {
       // Popup blocking must not interrupt video playback.
     }
@@ -816,7 +822,7 @@ class _Library extends State<Library> {
                         if (!adminView && adsReady) ...[
                           const Text('Sponsored', style: TextStyle(color: Colors.white54, fontSize: 12)),
                           const SizedBox(height: 8),
-                          const SizedBox(height: 280, child: HtmlElementView(viewType: 'native-ad')),
+                          SizedBox(height: nativeAdHeight, child: const HtmlElementView(viewType: 'native-ad')),
                           const SizedBox(height: 20),
                         ],
                         if (!adminView && performerFilter.isNotEmpty)
@@ -899,9 +905,9 @@ class _Library extends State<Library> {
                               return Wrap(
                                 spacing: 20,
                                 runSpacing: 24,
-                                children: pageVideos.asMap().entries.expand<Widget>((entry) {
+                                children: pageVideos.asMap().entries.map((entry) {
                                   final v = entry.value;
-                                  final card = SizedBox(
+                                  return SizedBox(
                                     width: width,
                                     child: Card(
                                       clipBehavior: Clip.antiAlias,
@@ -1044,16 +1050,6 @@ class _Library extends State<Library> {
                                       ),
                                     ),
                                   );
-                                  final firstSlot = entry.key * 8 ~/ pageVideos.length;
-                                  final lastSlot = (entry.key + 1) * 8 ~/ pageVideos.length;
-                                  return [card, if (!adminView && adsReady) for (var slot = firstSlot; slot < lastSlot; slot++) SizedBox(
-                                    width: constraints.maxWidth,
-                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                      const Text('Sponsored', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                                      const SizedBox(height: 8),
-                                      SizedBox(height: 280, child: HtmlElementView(key: ValueKey('banner-$currentPage-$slot'), viewType: 'native-banner-ad')),
-                                    ]),
-                                  )];
                                 }).toList(),
                               );
                             },
