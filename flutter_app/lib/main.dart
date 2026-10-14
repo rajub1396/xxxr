@@ -7,14 +7,14 @@ import 'dart:ui_web' as ui;
 
 import 'package:flutter/material.dart';
 
-void main() => runApp(const RedX());
+void main() => runApp(const Xxxr());
 const red = Color(0xfff34350);
 
-class RedX extends StatelessWidget {
-  const RedX({super.key});
+class Xxxr extends StatelessWidget {
+  const Xxxr({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'RedX Video',
+    title: 'xxxr',
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       brightness: Brightness.dark,
@@ -65,13 +65,15 @@ class _AgeConfirmationState extends State<AgeConfirmation> {
                   const Icon(Icons.lock_outline, size: 44, color: red),
                   const SizedBox(height: 20),
                   const Text(
-                    'REDX 18+',
+                    'xxxr',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 3,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  const Text('the best porn site.', style: TextStyle(color: Colors.white60)),
                   const SizedBox(height: 16),
                   const Text(
                     'For adults only',
@@ -191,10 +193,10 @@ class _Library extends State<Library> {
       await showDialog(
         context: context,
         builder: (c) => AlertDialog(
-          title: const Text('Made for RedX members'),
+          title: const Text('Made for xxxr members'),
           content: Text(
             me['email'] == null
-                ? 'Sign in to your RedX account, then ask the admin to activate premium access.'
+                ? 'Sign in to your xxxr account, then ask the admin to activate premium access.'
                 : 'Ask the admin to activate premium access for ${me['email']}.',
           ),
           actions: [
@@ -516,7 +518,7 @@ class _Library extends State<Library> {
                   const Icon(Icons.play_circle_fill, color: red, size: 32),
                   const SizedBox(width: 10),
                   const Text(
-                    'RED',
+                    'xxx',
                     style: TextStyle(
                       fontSize: 25,
                       fontWeight: FontWeight.w900,
@@ -524,7 +526,7 @@ class _Library extends State<Library> {
                     ),
                   ),
                   const Text(
-                    'X',
+                    'r',
                     style: TextStyle(
                       fontSize: 25,
                       fontWeight: FontWeight.w900,
@@ -539,7 +541,7 @@ class _Library extends State<Library> {
                     ),
                     const SizedBox(width: 20),
                     const Text(
-                      'Your next great watch',
+                      'the best porn site.',
                       style: TextStyle(color: Colors.white54),
                     ),
                   ],
@@ -658,7 +660,7 @@ class _Library extends State<Library> {
                                     Icon(Icons.bolt, color: red, size: 18),
                                     SizedBox(width: 8),
                                     Text(
-                                      'THE REDX 18+ COLLECTION',
+                                      'THE xxxr 18+ COLLECTION',
                                       style: TextStyle(
                                         color: red,
                                         fontWeight: FontWeight.bold,
@@ -678,7 +680,7 @@ class _Library extends State<Library> {
                                 ),
                                 const SizedBox(height: 20),
                                 const Text(
-                                  'A video collection for adults.\nBrowse free videos or unlock the premium collection.',
+                                  'the best porn site.\nBrowse free videos or unlock the premium collection.',
                                   style: TextStyle(
                                     color: Colors.white60,
                                     fontSize: 16,
@@ -963,7 +965,7 @@ class _Library extends State<Library> {
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 20),
                           child: Text(
-                            'REDX 18+  /  For adults only.',
+                            'xxxr 18+  /  For adults only.',
                             style: TextStyle(
                               color: Colors.white38,
                               fontSize: 12,

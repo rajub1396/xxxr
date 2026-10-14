@@ -36,7 +36,7 @@ export default function AdminDashboard({ email }: { email: string }) {
     }, 'Video published.');
   }
   return <main className="admin-shell"><div className="admin-container">
-    <header className="admin-header"><div><a className="admin-brand" href="/">RED<span>X</span></a><p className="admin-muted">Admin Studio</p></div><div className="admin-account"><span>{email}</span><a href="/signout-with-chatgpt?return_to=%2Fadmin-login">Sign out</a></div></header>
+    <header className="admin-header"><div><a className="admin-brand" href="/">xxx<span>r</span></a><p className="admin-muted">Admin Studio</p></div><div className="admin-account"><span>{email}</span><a href="/signout-with-chatgpt?return_to=%2Fadmin-login">Sign out</a></div></header>
     <div className="admin-heading"><div><p className="admin-eyebrow">YOUR CONTROL ROOM</p><h1>Collection overview</h1><p className="admin-muted">Publish new videos and control membership access.</p></div><a className="admin-secondary" href="/">View library ↗</a></div>
     <div className="admin-stats">{[['Videos', videos.length], ['Members', members.length], ['Premium members', members.filter(m => m.premium).length]].map(([label, count]) => <section className="admin-card" key={label}><span className="admin-muted">{label}</span><strong>{loading ? '—' : count}</strong></section>)}</div>
     {error && <p className="admin-error" role="alert">{error}</p>}{notice && <p className="admin-notice" role="status">{notice}</p>}

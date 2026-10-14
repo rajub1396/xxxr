@@ -4,7 +4,7 @@ const request = (path, options = {}) => fetch(`${base}${path}`, { redirect: 'man
 for (const path of ['/admin-login', '/login', '/watch/index.html']) {
   const response = await request(path);
   assert.equal(response.status, 200, path);
-  assert.match(await response.text(), /RedX|RED|flutter/i, path);
+  assert.match(await response.text(), /xxxr/i, path);
 }
 const denied = await request('/admin');
 assert.equal(denied.status, 307);

@@ -8,7 +8,7 @@ export default async function AdminLogin() {
   const user = await getUser();
   if (user?.admin) redirect('/admin');
   return <main className="admin-shell login-shell"><section className="admin-card login-card">
-    <a className="admin-brand" href="/">RED<span>X</span></a>
+    <a className="admin-brand" href="/">xxx<span>r</span></a>
     <p className="admin-eyebrow">ADMIN STUDIO</p><h1>Manage your collection.</h1>
     <p className="admin-muted">Sign in with your administrator email and password to publish videos and manage premium members.</p>
     {user && <p className="admin-error" role="alert">{user.email} does not have administrator access. Sign out and use the administrator account.</p>}
