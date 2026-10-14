@@ -817,11 +817,6 @@ class _Library extends State<Library> {
                           const Text('Sponsored', style: TextStyle(color: Colors.white54, fontSize: 12)),
                           const SizedBox(height: 8),
                           const SizedBox(height: 280, child: HtmlElementView(viewType: 'native-ad')),
-                          TextButton.icon(
-                            onPressed: () => html.window.open(smartlink, '_blank', 'noopener,noreferrer'),
-                            icon: const Icon(Icons.open_in_new, size: 16),
-                            label: const Text('Sponsored link'),
-                          ),
                           const SizedBox(height: 20),
                         ],
                         if (!adminView && performerFilter.isNotEmpty)
