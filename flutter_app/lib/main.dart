@@ -148,6 +148,8 @@ class _Library extends State<Library> {
   Timer? timer;
   Timer? adTimer;
   bool adsReady = false;
+  final libraryScroll = ScrollController();
+  StreamSubscription<html.Event>? adScrollMessages;
   bool initialVideoHandled = false;
   @override
   void initState() {
@@ -155,16 +157,23 @@ class _Library extends State<Library> {
     adTimer = Timer(const Duration(seconds: 7), () {
       if (!mounted) return;
       setState(() => adsReady = true);
-      loadAdScripts();
     });
     ui.platformViewRegistry.registerViewFactory('native-ad', (_) {
-      return html.IFrameElement()
+      final frame = html.IFrameElement()
         ..src = '/watch/native-ad.html'
         ..title = 'Sponsored advertisement'
         ..setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox')
         ..style.border = '0'
         ..style.width = '100%'
         ..style.height = '100%';
+      return frame;
+    });
+    adScrollMessages = html.window.on['xxxr-ad-scroll'].listen((event) {
+      if (event is! html.CustomEvent || event.detail is! String) return;
+      final delta = double.tryParse(event.detail as String);
+      if (delta == null || !delta.isFinite || delta.abs() > 1000 || !libraryScroll.hasClients) return;
+      final position = libraryScroll.position;
+      libraryScroll.jumpTo((position.pixels + delta).clamp(position.minScrollExtent, position.maxScrollExtent).toDouble());
     });
     load();
     timer = Timer.periodic(
@@ -173,23 +182,12 @@ class _Library extends State<Library> {
     );
   }
 
-  void loadAdScripts() {
-    for (final source in [
-      'https://benchform.org/1/6d878111a0c91e920ca3bc82a847c225',
-      'https://biomanos.org/14/153f7a6ddbd44baa00f5983c70853201',
-    ]) {
-      if (html.document.querySelector('script[src="$source"]') == null) {
-        final script = html.ScriptElement()..src = source;
-        script.setAttribute('data-cfasync', 'false');
-        html.document.body?.append(script);
-      }
-    }
-  }
-
   @override
   void dispose() {
     timer?.cancel();
     adTimer?.cancel();
+    adScrollMessages?.cancel();
+    libraryScroll.dispose();
     super.dispose();
   }
 
@@ -555,6 +553,18 @@ class _Library extends State<Library> {
       : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [photo, const SizedBox(height: 24), details]));
   }
 
+  Widget catalogChips(String group, String label, String value, ValueChanged<String> changed) {
+    final entries = List<dynamic>.from(catalog[group] ?? []);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 10),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        ChoiceChip(label: Text('All ${label.toLowerCase()}'), selected: value.isEmpty, onSelected: (_) => changed('')),
+        ...entries.map((entry) => ChoiceChip(label: Text(entry['name'].toString()), selected: value == entry['id'], onSelected: (selected) => changed(selected ? entry['id'].toString() : ''), selectedColor: red.withValues(alpha: .2))),
+      ]),
+    ]);
+  }
+
   Widget catalogDropdown(String group, String label, String value, ValueChanged<String> changed) {
     final entries = List<dynamic>.from(catalog[group] ?? []);
     return SizedBox(width: 220, child: DropdownButtonFormField<String>(
@@ -671,6 +681,7 @@ class _Library extends State<Library> {
             ),
             Expanded(
               child: SingleChildScrollView(
+                controller: libraryScroll,
                 padding: EdgeInsets.symmetric(
                   horizontal: wide ? 48 : 20,
                   vertical: 32,
@@ -827,12 +838,14 @@ class _Library extends State<Library> {
                         ),
                         const SizedBox(height: 16),
                         Wrap(spacing: 12, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                          catalogDropdown('categories', 'Categories', categoryFilter, (value) => setState(() => categoryFilter = value)),
                           catalogDropdown('performers', 'Performers', performerFilter, (value) => setState(() => performerFilter = value)),
-                          catalogDropdown('tags', 'Tags', tagFilter, (value) => setState(() => tagFilter = value)),
                           if (categoryFilter.isNotEmpty || performerFilter.isNotEmpty || tagFilter.isNotEmpty)
                             TextButton.icon(onPressed: () => setState(() { categoryFilter = ''; performerFilter = ''; tagFilter = ''; }), icon: const Icon(Icons.close), label: const Text('Clear filters')),
                         ]),
+                        const SizedBox(height: 20),
+                        catalogChips('categories', 'Categories', categoryFilter, (value) => setState(() => categoryFilter = value)),
+                        const SizedBox(height: 20),
+                        catalogChips('tags', 'Tags', tagFilter, (value) => setState(() => tagFilter = value)),
                         const SizedBox(height: 20),
                         if (!adminView && adsReady) ...[
                           const Text('Sponsored', style: TextStyle(color: Colors.white54, fontSize: 12)),
