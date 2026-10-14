@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 void main() => runApp(const Xxxr());
 const red = Color(0xfff34350);
+const smartlink = 'https://apiguinee.org/4/4654f140d1b72470ff9adaacd8b2f5b8';
 
 class Xxxr extends StatelessWidget {
   const Xxxr({super.key});
@@ -231,6 +232,15 @@ class _Library extends State<Library> {
     '/signin-with-chatgpt?return_to=%2Fwatch%2Findex.html',
     '_top',
   );
+  void selectVideo(dynamic video) {
+    try {
+      html.window.open(smartlink, '_blank', 'noopener,noreferrer');
+    } catch (_) {
+      // Popup blocking must not interrupt video playback.
+    }
+    unawaited(play(video));
+  }
+
   Future<void> play(dynamic v) async {
     if (v['premium'] == 1 && me['premium'] != true) {
       await showDialog(
@@ -788,7 +798,7 @@ class _Library extends State<Library> {
                           const SizedBox(height: 8),
                           const SizedBox(height: 280, child: HtmlElementView(viewType: 'native-ad')),
                           TextButton.icon(
-                            onPressed: () => html.window.open('https://apiguinee.org/4/4654f140d1b72470ff9adaacd8b2f5b8', '_blank', 'noopener,noreferrer'),
+                            onPressed: () => html.window.open(smartlink, '_blank', 'noopener,noreferrer'),
                             icon: const Icon(Icons.open_in_new, size: 16),
                             label: const Text('Sponsored link'),
                           ),
@@ -800,6 +810,10 @@ class _Library extends State<Library> {
                             Text('${performer['name']} videos', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 20),
                           ],
+                        if (!adminView) ...[
+                          const Text('Selecting a video opens a sponsored tab.', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                          const SizedBox(height: 12),
+                        ],
                         if (loading)
                           const Center(child: CircularProgressIndicator())
                         else if (error.isNotEmpty)
@@ -876,7 +890,7 @@ class _Library extends State<Library> {
                                     child: Card(
                                       clipBehavior: Clip.antiAlias,
                                       child: InkWell(
-                                        onTap: () => play(v),
+                                        onTap: () => selectVideo(v),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
