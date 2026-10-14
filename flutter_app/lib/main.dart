@@ -152,6 +152,9 @@ class _Library extends State<Library> {
   final libraryScroll = ScrollController();
   StreamSubscription<html.Event>? adScrollMessages;
   bool initialVideoHandled = false;
+  int videoPage = 0;
+  static const videosPerPage = 30;
+  final videoGridKey = GlobalKey();
   @override
   void initState() {
     super.initState();
@@ -534,12 +537,24 @@ class _Library extends State<Library> {
     }
   }
 
+  void changeFilters(VoidCallback update) {
+    setState(() { update(); videoPage = 0; });
+  }
+
+  void showVideoPage(int page) {
+    setState(() => videoPage = page);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final grid = videoGridKey.currentContext;
+      if (mounted && grid != null) Scrollable.ensureVisible(grid, duration: const Duration(milliseconds: 250));
+    });
+  }
+
   Widget chip(String name) => Padding(
     padding: const EdgeInsets.only(right: 10, bottom: 8),
     child: ChoiceChip(
       label: Text(name),
       selected: filter == name,
-      onSelected: (_) => setState(() => filter = name),
+      onSelected: (_) => changeFilters(() => filter = name),
       selectedColor: red.withValues(alpha: .2),
     ),
   );
@@ -598,6 +613,9 @@ class _Library extends State<Library> {
               [v['title'], v['description'], v['category'], ...(v['performers'] as List? ?? []).map((entry) => entry['name']), ...(v['tags'] as List? ?? []).map((entry) => entry['name'])].join(' ').toLowerCase().contains(query.toLowerCase()),
         )
         .toList();
+    final pageCount = (shown.length / videosPerPage).ceil();
+    final currentPage = pageCount == 0 ? 0 : videoPage.clamp(0, pageCount - 1).toInt();
+    final pageVideos = shown.skip(currentPage * videosPerPage).take(videosPerPage).toList();
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -765,7 +783,7 @@ class _Library extends State<Library> {
                             SizedBox(
                               width: wide ? 300 : 260,
                               child: TextField(
-                                onChanged: (v) => setState(() => query = v),
+                                onChanged: (v) => changeFilters(() => query = v),
                                 decoration: const InputDecoration(
                                   hintText: 'Search titles, performers, or tags',
                                   prefixIcon: Icon(Icons.search),
@@ -784,14 +802,14 @@ class _Library extends State<Library> {
                         ),
                         const SizedBox(height: 16),
                         Wrap(spacing: 12, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                          catalogDropdown('performers', 'Performers', performerFilter, (value) => setState(() => performerFilter = value)),
+                          catalogDropdown('performers', 'Performers', performerFilter, (value) => changeFilters(() => performerFilter = value)),
                           if (categoryFilter.isNotEmpty || performerFilter.isNotEmpty || tagFilter.isNotEmpty)
-                            TextButton.icon(onPressed: () => setState(() { categoryFilter = ''; performerFilter = ''; tagFilter = ''; }), icon: const Icon(Icons.close), label: const Text('Clear filters')),
+                            TextButton.icon(onPressed: () => changeFilters(() { categoryFilter = ''; performerFilter = ''; tagFilter = ''; }), icon: const Icon(Icons.close), label: const Text('Clear filters')),
                         ]),
                         const SizedBox(height: 20),
-                        catalogChips('categories', 'Categories', categoryFilter, (value) => setState(() => categoryFilter = value)),
+                        catalogChips('categories', 'Categories', categoryFilter, (value) => changeFilters(() => categoryFilter = value)),
                         const SizedBox(height: 20),
-                        catalogChips('tags', 'Tags', tagFilter, (value) => setState(() => tagFilter = value)),
+                        catalogChips('tags', 'Tags', tagFilter, (value) => changeFilters(() => tagFilter = value)),
                         const SizedBox(height: 20),
                         if (!adminView && adsReady) ...[
                           const Text('Sponsored', style: TextStyle(color: Colors.white54, fontSize: 12)),
@@ -869,6 +887,7 @@ class _Library extends State<Library> {
                           )
                         else
                           LayoutBuilder(
+                            key: videoGridKey,
                             builder: (c, constraints) {
                               final columns = constraints.maxWidth > 1100
                                   ? 4
@@ -883,7 +902,7 @@ class _Library extends State<Library> {
                               return Wrap(
                                 spacing: 20,
                                 runSpacing: 24,
-                                children: shown.asMap().entries.map((entry) {
+                                children: pageVideos.asMap().entries.map((entry) {
                                   final v = entry.value;
                                   return SizedBox(
                                     width: width,
@@ -1032,6 +1051,18 @@ class _Library extends State<Library> {
                               );
                             },
                           ),
+                        if (!loading && error.isEmpty && shown.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          Text('Showing ${currentPage * videosPerPage + 1}–${currentPage * videosPerPage + pageVideos.length} of ${shown.length} videos', style: const TextStyle(color: Colors.white54)),
+                          if (pageCount > 1) ...[
+                            const SizedBox(height: 16),
+                            Wrap(spacing: 16, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                              OutlinedButton.icon(onPressed: currentPage > 0 ? () => showVideoPage(currentPage - 1) : null, icon: const Icon(Icons.chevron_left), label: const Text('Previous')),
+                              Text('Page ${currentPage + 1} of $pageCount'),
+                              OutlinedButton.icon(onPressed: currentPage + 1 < pageCount ? () => showVideoPage(currentPage + 1) : null, icon: const Icon(Icons.chevron_right), label: const Text('Next')),
+                            ]),
+                          ],
+                        ],
                         const SizedBox(height: 48),
                         const Divider(color: Color(0xff242630)),
                         const Padding(
