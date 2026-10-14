@@ -24,6 +24,13 @@ try{
  video=await request(`videos/${videoId}`);assert.ok(video.category.includes('Renamed'));assert.equal(video.performers.find(item=>item.id===p1.id).bio,'Updated performer biography');
  await request(`videos/${videoId}`,'PATCH',{title:`Edited catalog video ${suffix}`,description:'Edited description',categoryIds:[c2.id],performerIds:[p1.id,p2.id],tagIds:[t1.id,t2.id]});
  video=await request(`videos/${videoId}`);assert.equal(video.title,`Edited catalog video ${suffix}`);assert.equal(video.categories.length,1);assert.equal(video.tags.length,2);
+ const allTagIds=(await request('tags')).map(tag=>tag.id);
+ await request(`videos/${videoId}`,'PATCH',{tagIds:allTagIds});
+ assert.equal((await request(`videos/${videoId}`)).tags.length,allTagIds.length);
+ await request(`videos/${videoId}`,'PATCH',{tagIds:[]});
+ assert.equal((await request(`videos/${videoId}`)).tags.length,0);
+ await request(`videos/${videoId}`,'PATCH',{tagIds:[t1.id,t2.id]});
+ console.log(`PASS selecting and clearing all ${allTagIds.length} available tags`);
  await request(`videos/${videoId}`,'PATCH',{title:'Must be rolled back',performerIds:[c1.id]},400);
  assert.equal((await request(`videos/${videoId}`)).title,`Edited catalog video ${suffix}`);
  console.log('PASS shared-name updates, performer profiles, video editing, and transactional validation');

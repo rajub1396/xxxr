@@ -23,7 +23,7 @@ export async function assignVideoTerms(db:Executor,videoId:string,body:Record<st
   const groups:Record<Kind,string[]>={category:current.filter(t=>t.kind==='category').map(t=>t.id),performer:current.filter(t=>t.kind==='performer').map(t=>t.id),tag:current.filter(t=>t.kind==='tag').map(t=>t.id)};
   for(const [field,kind] of [['categoryIds','category'],['performerIds','performer'],['tagIds','tag']] as const){
     if(field in body){
-      const ids=catalogIds(body[field]) as string[];
+      const ids=catalogIds(body[field],kind==='tag'?1000:20) as string[];
       if(ids.length){const valid=await db.select({id:catalogTerms.id}).from(catalogTerms).where(and(eq(catalogTerms.kind,kind),inArray(catalogTerms.id,ids)));if(valid.length!==ids.length)throw new CatalogError('A selected catalog entry no longer exists. Refresh and try again.');}
       groups[kind]=ids;
     }

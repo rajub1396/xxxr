@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 
 type Entry={id:string;name:string;kind:string;bio:string;image:string;usage:number};
 type Catalog={categories:Entry[];performers:Entry[];tags:Entry[]};
@@ -17,8 +17,10 @@ function Choices({label,name,entries,selected=[]}:{label:string;name:string;entr
   return <fieldset className="admin-choices"><legend>{label}</legend>{entries.length?<div className="admin-choice-list">{entries.map(entry=><label className="admin-check" key={entry.id}><input type="checkbox" name={name} value={entry.id} defaultChecked={selected.some(item=>item.id===entry.id)}/>{entry.name}</label>)}</div>:<p className="admin-muted">Add {label.toLowerCase()} in the catalog tabs first.</p>}</fieldset>;
 }
 function TagChoices({entries,selected=[]}:{entries:Entry[];selected?:Entry[]}){
+  const selectRef=useRef<HTMLSelectElement>(null);
+  function chooseAll(checked:boolean){if(selectRef.current)for(const option of selectRef.current.options)option.selected=checked;}
   const options=[...entries].sort((a,b)=>a.name.localeCompare(b.name));
-  return <fieldset className="admin-choices"><legend>Tags</legend>{options.length?<><label htmlFor="video-tag-options">Select tags ({options.length} available)</label><select id="video-tag-options" className="admin-tag-select" name="tagIds" multiple size={Math.min(8,Math.max(3,options.length))} defaultValue={selected.map(tag=>tag.id)} aria-describedby="video-tag-help">{options.map(tag=><option key={tag.id} value={tag.id}>{tag.name}</option>)}</select><p id="video-tag-help" className="admin-muted">Choose up to 20 tags. On a computer, hold Ctrl or Command to select multiple options. Manage names in the Tags tab.</p></>:<p className="admin-muted">Add names in the Tags tab to make them available here.</p>}</fieldset>;
+  return <fieldset className="admin-choices"><legend>Tags</legend>{options.length?<><label htmlFor="video-tag-options">Select tags ({options.length} available)</label><div className="admin-actions"><button type="button" className="admin-secondary" onClick={()=>chooseAll(true)}>Select all</button><button type="button" className="admin-secondary" onClick={()=>chooseAll(false)}>Clear selection</button></div><select ref={selectRef} id="video-tag-options" className="admin-tag-select" name="tagIds" multiple size={Math.min(8,Math.max(3,options.length))} defaultValue={selected.map(tag=>tag.id)} aria-describedby="video-tag-help">{options.map(tag=><option key={tag.id} value={tag.id}>{tag.name}</option>)}</select><p id="video-tag-help" className="admin-muted">Select all tags or choose individual options. On a computer, hold Ctrl or Command to select multiple options. Manage names in the Tags tab.</p></>:<p className="admin-muted">Add names in the Tags tab to make them available here.</p>}</fieldset>;
 }
 function VideoForm({video,catalog,busy,onSave,onCancel}:{video:Video|null;catalog:Catalog;busy:boolean;onSave:(body:Record<string,unknown>)=>Promise<boolean>;onCancel:()=>void}){
   async function submit(event:FormEvent<HTMLFormElement>){
