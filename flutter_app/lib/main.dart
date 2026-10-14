@@ -141,6 +141,8 @@ class Library extends StatefulWidget {
 class _Library extends State<Library> {
   List<dynamic> videos = [];
   Map<String, dynamic> me = {};
+  Map<String, dynamic> catalog = {'categories': [], 'performers': [], 'tags': []};
+  String categoryFilter = '', performerFilter = '', tagFilter = '';
   String filter = 'All videos', query = '', error = '';
   bool loading = true, adminView = false;
   Timer? timer;
@@ -162,11 +164,15 @@ class _Library extends State<Library> {
 
   Future<void> load({bool silent = false}) async {
     try {
-      final results = await Future.wait([api('me'), api('videos')]);
+      final results = await Future.wait([api('me'), api('videos'), api('catalog')]);
       if (mounted)
         setState(() {
           me = Map<String, dynamic>.from(results[0]);
           videos = results[1];
+          catalog = Map<String, dynamic>.from(results[2]);
+          if (!(catalog['categories'] as List).any((entry) => entry['id'] == categoryFilter)) categoryFilter = '';
+          if (!(catalog['performers'] as List).any((entry) => entry['id'] == performerFilter)) performerFilter = '';
+          if (!(catalog['tags'] as List).any((entry) => entry['id'] == tagFilter)) tagFilter = '';
           loading = false;
           error = '';
         });
@@ -490,6 +496,15 @@ class _Library extends State<Library> {
       selectedColor: red.withValues(alpha: .2),
     ),
   );
+  Widget catalogDropdown(String group, String label, String value, ValueChanged<String> changed) {
+    final entries = List<dynamic>.from(catalog[group] ?? []);
+    return SizedBox(width: 220, child: DropdownButtonFormField<String>(
+      key: ValueKey('$group-$value'), initialValue: value, isExpanded: true,
+      decoration: InputDecoration(labelText: label),
+      items: [DropdownMenuItem(value: '', child: Text('All ' + label.toLowerCase())), ...entries.map((entry) => DropdownMenuItem<String>(value: entry['id'].toString(), child: Text(entry['name'], overflow: TextOverflow.ellipsis)))],
+      onChanged: (selected) => changed(selected ?? ''),
+    ));
+  }
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width > 850;
@@ -498,7 +513,10 @@ class _Library extends State<Library> {
           (v) =>
               (filter != 'Premium' || v['premium'] == 1) &&
               (filter != 'Free to watch' || v['premium'] == 0) &&
-              v['title'].toString().toLowerCase().contains(query.toLowerCase()),
+              (categoryFilter.isEmpty || (v['categories'] as List? ?? []).any((entry) => entry['id'] == categoryFilter)) &&
+              (performerFilter.isEmpty || (v['performers'] as List? ?? []).any((entry) => entry['id'] == performerFilter)) &&
+              (tagFilter.isEmpty || (v['tags'] as List? ?? []).any((entry) => entry['id'] == tagFilter)) &&
+              [v['title'], v['description'], v['category'], ...(v['performers'] as List? ?? []).map((entry) => entry['name']), ...(v['tags'] as List? ?? []).map((entry) => entry['name'])].join(' ').toLowerCase().contains(query.toLowerCase()),
         )
         .toList();
     return Scaffold(
@@ -549,7 +567,7 @@ class _Library extends State<Library> {
                   if (me['admin'] == true)
                     IconButton(
                       tooltip: 'Admin dashboard',
-                      onPressed: () => setState(() => adminView = !adminView),
+                      onPressed: () => html.window.location.assign('/admin'),
                       icon: const Icon(Icons.admin_panel_settings_outlined),
                     ),
                   if (me['email'] == null)
@@ -728,7 +746,7 @@ class _Library extends State<Library> {
                               child: TextField(
                                 onChanged: (v) => setState(() => query = v),
                                 decoration: const InputDecoration(
-                                  hintText: 'Search videos',
+                                  hintText: 'Search titles, performers, or tags',
                                   prefixIcon: Icon(Icons.search),
                                 ),
                               ),
@@ -744,6 +762,14 @@ class _Library extends State<Library> {
                           ].map(chip).toList(),
                         ),
                         const SizedBox(height: 16),
+                        Wrap(spacing: 12, runSpacing: 12, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                          catalogDropdown('categories', 'Categories', categoryFilter, (value) => setState(() => categoryFilter = value)),
+                          catalogDropdown('performers', 'Performers', performerFilter, (value) => setState(() => performerFilter = value)),
+                          catalogDropdown('tags', 'Tags', tagFilter, (value) => setState(() => tagFilter = value)),
+                          if (categoryFilter.isNotEmpty || performerFilter.isNotEmpty || tagFilter.isNotEmpty)
+                            TextButton.icon(onPressed: () => setState(() { categoryFilter = ''; performerFilter = ''; tagFilter = ''; }), icon: const Icon(Icons.close), label: const Text('Clear filters')),
+                        ]),
+                        const SizedBox(height: 20),
                         if (loading)
                           const Center(child: CircularProgressIndicator())
                         else if (error.isNotEmpty)
@@ -912,6 +938,8 @@ class _Library extends State<Library> {
                                                     ),
                                                   ),
                                                   const SizedBox(height: 8),
+                                                  if ((v['performers'] as List? ?? []).isNotEmpty)
+                                                    Padding(padding: const EdgeInsets.only(bottom: 8), child: Text((v['performers'] as List).map((entry) => entry['name']).join(', '), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white60, fontSize: 12))),
                                                   Text(
                                                     v['title'],
                                                     maxLines: 2,
