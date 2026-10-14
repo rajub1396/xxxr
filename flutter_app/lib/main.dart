@@ -146,19 +146,16 @@ class _Library extends State<Library> {
   String filter = 'All videos', query = '', error = '';
   bool loading = true, adminView = false;
   Timer? timer;
+  Timer? adTimer;
+  bool adsReady = false;
   @override
   void initState() {
     super.initState();
-    for (final source in [
-      'https://benchform.org/1/6d878111a0c91e920ca3bc82a847c225',
-      'https://biomanos.org/14/153f7a6ddbd44baa00f5983c70853201',
-    ]) {
-      if (html.document.querySelector('script[src="$source"]') == null) {
-        final script = html.ScriptElement()..src = source;
-        script.setAttribute('data-cfasync', 'false');
-        html.document.body?.append(script);
-      }
-    }
+    adTimer = Timer(const Duration(seconds: 7), () {
+      if (!mounted) return;
+      setState(() => adsReady = true);
+      loadAdScripts();
+    });
     ui.platformViewRegistry.registerViewFactory('native-ad', (_) {
       return html.IFrameElement()
         ..src = '/watch/native-ad.html'
@@ -175,9 +172,23 @@ class _Library extends State<Library> {
     );
   }
 
+  void loadAdScripts() {
+    for (final source in [
+      'https://benchform.org/1/6d878111a0c91e920ca3bc82a847c225',
+      'https://biomanos.org/14/153f7a6ddbd44baa00f5983c70853201',
+    ]) {
+      if (html.document.querySelector('script[src="$source"]') == null) {
+        final script = html.ScriptElement()..src = source;
+        script.setAttribute('data-cfasync', 'false');
+        html.document.body?.append(script);
+      }
+    }
+  }
+
   @override
   void dispose() {
     timer?.cancel();
+    adTimer?.cancel();
     super.dispose();
   }
 
@@ -789,7 +800,7 @@ class _Library extends State<Library> {
                             TextButton.icon(onPressed: () => setState(() { categoryFilter = ''; performerFilter = ''; tagFilter = ''; }), icon: const Icon(Icons.close), label: const Text('Clear filters')),
                         ]),
                         const SizedBox(height: 20),
-                        if (!adminView) ...[
+                        if (!adminView && adsReady) ...[
                           const Text('Sponsored', style: TextStyle(color: Colors.white54, fontSize: 12)),
                           const SizedBox(height: 8),
                           const SizedBox(height: 280, child: HtmlElementView(viewType: 'native-ad')),

@@ -1,4 +1,4 @@
-﻿# xxxr
+# xxxr
 
 the best porn site.
 
@@ -30,4 +30,4 @@ For local development, configure the app variables in the ignored `.env.local` a
 
 The compiled Flutter frontend is committed in `public/watch`. To update it, run `flutter build web --base-href /watch/` from `flutter_app` and copy `flutter_app/build/web` into `public/watch`. The old sign-in URL remains as a redirect to `/login` for compatibility with the compiled frontend. Legacy Sites tooling is retained in the repository but is not used by the Render build or runtime.
 
-Public-library advertising loads after age confirmation: the supplied popunder and social-bar scripts load once per page, and the native banner appears in a labeled, sandboxed iframe. The sponsored smartlink opens in a new tab only when clicked. Ad providers control inventory and display; ad blockers can suppress placements. The dedicated Next.js login and admin pages do not load these scripts. Native banner markup is maintained in flutter_app/web/native-ad.html and copied to public/watch by the Flutter build.
+Public-library advertising loads automatically seven seconds after entering the age-confirmed library: the supplied popunder and social-bar scripts load once per page, and the native banner and sponsored link appear after the same delay, with the banner in a labeled, sandboxed iframe. The delay timer is canceled if the library is disposed. The sponsored smartlink opens in a new tab only when clicked. Ad providers control inventory and display; ad blockers can suppress placements. The dedicated Next.js login and admin pages do not load these scripts. Native banner markup is maintained in flutter_app/web/native-ad.html and copied to public/watch by the Flutter build.
