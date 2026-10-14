@@ -728,71 +728,7 @@ class _Library extends State<Library> {
                             ],
                           ),
                           const SizedBox(height: 32),
-                        ] else
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(wide ? 48 : 24),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xff342026),
-                                  Color(0xff191922),
-                                  Color(0xff11131a),
-                                ],
-                              ),
-                              border: Border.all(
-                                color: const Color(0xff3b2930),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  children: [
-                                    Icon(Icons.bolt, color: red, size: 18),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'THE xxxr 18+ COLLECTION',
-                                      style: TextStyle(
-                                        color: red,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  'Your private escape.\nPress play.',
-                                  style: TextStyle(
-                                    fontSize: wide ? 54 : 34,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.08,
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                const Text(
-                                  'the best porn site.\nBrowse free videos or unlock the premium collection.',
-                                  style: TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 16,
-                                    height: 1.6,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                FilledButton.icon(
-                                  onPressed: () =>
-                                      setState(() => filter = 'Premium'),
-                                  icon: const Icon(
-                                    Icons.workspace_premium_outlined,
-                                  ),
-                                  label: const Text('Explore premium'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        const SizedBox(height: 36),
+                        ],
                         Wrap(
                           alignment: WrapAlignment.spaceBetween,
                           spacing: 24,
