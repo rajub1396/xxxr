@@ -148,6 +148,7 @@ class _Library extends State<Library> {
   Timer? timer;
   Timer? adTimer;
   bool adsReady = false;
+  bool initialVideoHandled = false;
   @override
   void initState() {
     super.initState();
@@ -206,6 +207,14 @@ class _Library extends State<Library> {
           loading = false;
           error = '';
         });
+      if (mounted && !initialVideoHandled) {
+        initialVideoHandled = true;
+        final videoId = Uri.base.queryParameters['video'];
+        final matches = videos.where((video) => video['id'] == videoId);
+        if (videoId != null && matches.isNotEmpty) {
+          await play(matches.first);
+        }
+      }
     } catch (e) {
       if (mounted && !silent)
         setState(() {
@@ -594,6 +603,11 @@ class _Library extends State<Library> {
                     ),
                   ],
                   const Spacer(),
+                  IconButton(
+                    tooltip: 'Browse categories, performers, and tags',
+                    onPressed: () => html.window.location.assign('/browse'),
+                    icon: const Icon(Icons.category_outlined),
+                  ),
                   if (me['admin'] == true)
                     IconButton(
                       tooltip: 'Admin dashboard',
