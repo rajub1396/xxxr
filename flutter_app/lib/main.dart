@@ -535,6 +535,26 @@ class _Library extends State<Library> {
       selectedColor: red.withValues(alpha: .2),
     ),
   );
+  Widget performerProfile(Map<String, dynamic> performer, bool wide) {
+    final name = performer['name']?.toString() ?? 'Performer';
+    final image = performer['image']?.toString() ?? '';
+    final bio = performer['bio']?.toString() ?? '';
+    final count = videos.where((video) => (video['performers'] as List? ?? []).any((entry) => entry['id'] == performer['id'])).length;
+    final placeholder = Container(color: const Color(0xff242630), child: const Center(child: Icon(Icons.person_outline, size: 100, color: Colors.white38)));
+    final photo = SizedBox(width: wide ? 320 : 280, child: AspectRatio(aspectRatio: 3 / 4, child: ClipRRect(borderRadius: BorderRadius.circular(16), child: image.startsWith('https://') ? Image.network(image, fit: BoxFit.cover, webHtmlElementStrategy: WebHtmlElementStrategy.prefer, semanticLabel: '$name performer photo', errorBuilder: (_, __, ___) => placeholder) : placeholder)));
+    final details = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('PERFORMER', style: TextStyle(color: red, letterSpacing: 2, fontSize: 12)),
+      const SizedBox(height: 12),
+      Text(name, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 12),
+      Text('$count ${count == 1 ? 'video' : 'videos'}', style: const TextStyle(color: Colors.white60)),
+      if (bio.isNotEmpty) ...[const SizedBox(height: 20), Text(bio, style: const TextStyle(color: Colors.white70, height: 1.6))],
+    ]);
+    return Padding(padding: const EdgeInsets.only(bottom: 28), child: wide
+      ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [photo, const SizedBox(width: 32), Expanded(child: details)])
+      : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [photo, const SizedBox(height: 24), details]));
+  }
+
   Widget catalogDropdown(String group, String label, String value, ValueChanged<String> changed) {
     final entries = List<dynamic>.from(catalog[group] ?? []);
     return SizedBox(width: 220, child: DropdownButtonFormField<String>(
@@ -825,6 +845,12 @@ class _Library extends State<Library> {
                           ),
                           const SizedBox(height: 20),
                         ],
+                        if (!adminView && performerFilter.isNotEmpty)
+                          for (final performer in (catalog['performers'] as List).where((entry) => entry['id'] == performerFilter)) ...[
+                            performerProfile(Map<String, dynamic>.from(performer), wide),
+                            Text('${performer['name']} videos', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 20),
+                          ],
                         if (loading)
                           const Center(child: CircularProgressIndicator())
                         else if (error.isNotEmpty)
