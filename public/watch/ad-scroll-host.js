@@ -1,8 +1,11 @@
 // Validate the sending frame using browser window identity before notifying Dart.
 window.addEventListener('message', event => {
   if (event.origin !== 'null' || typeof event.data !== 'string' || event.data.length > 200) return;
-  const frameUrl = new URL('native-ad.html', document.baseURI).href;
-  const trusted = Array.from(document.querySelectorAll('iframe')).some(frame => frame.src === frameUrl && event.source === frame.contentWindow);
+  const frameUrl = new URL('native-ad.html', document.baseURI);
+  const trusted = Array.from(document.querySelectorAll('iframe')).some(frame => {
+    const source = new URL(frame.src, document.baseURI);
+    return source.origin === frameUrl.origin && source.pathname === frameUrl.pathname && event.source === frame.contentWindow;
+  });
   if (!trusted) return;
   let message;
   try { message = JSON.parse(event.data); } catch { return; }
