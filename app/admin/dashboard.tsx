@@ -16,6 +16,10 @@ function Preview({src,name}:{src:string;name:string}){return <img className="adm
 function Choices({label,name,entries,selected=[]}:{label:string;name:string;entries:Entry[];selected?:Entry[]}){
   return <fieldset className="admin-choices"><legend>{label}</legend>{entries.length?<div className="admin-choice-list">{entries.map(entry=><label className="admin-check" key={entry.id}><input type="checkbox" name={name} value={entry.id} defaultChecked={selected.some(item=>item.id===entry.id)}/>{entry.name}</label>)}</div>:<p className="admin-muted">Add {label.toLowerCase()} in the catalog tabs first.</p>}</fieldset>;
 }
+function TagChoices({entries,selected=[]}:{entries:Entry[];selected?:Entry[]}){
+  const options=[...entries].sort((a,b)=>a.name.localeCompare(b.name));
+  return <fieldset className="admin-choices"><legend>Tags</legend>{options.length?<><label htmlFor="video-tag-options">Select tags ({options.length} available)</label><select id="video-tag-options" className="admin-tag-select" name="tagIds" multiple size={Math.min(8,Math.max(3,options.length))} defaultValue={selected.map(tag=>tag.id)} aria-describedby="video-tag-help">{options.map(tag=><option key={tag.id} value={tag.id}>{tag.name}</option>)}</select><p id="video-tag-help" className="admin-muted">Choose up to 20 tags. On a computer, hold Ctrl or Command to select multiple options. Manage names in the Tags tab.</p></>:<p className="admin-muted">Add names in the Tags tab to make them available here.</p>}</fieldset>;
+}
 function VideoForm({video,catalog,busy,onSave,onCancel}:{video:Video|null;catalog:Catalog;busy:boolean;onSave:(body:Record<string,unknown>)=>Promise<boolean>;onCancel:()=>void}){
   async function submit(event:FormEvent<HTMLFormElement>){
     event.preventDefault();const form=event.currentTarget;const values=new FormData(form);
@@ -29,7 +33,7 @@ function VideoForm({video,catalog,busy,onSave,onCancel}:{video:Video|null;catalo
     <label>Description<textarea name="description" rows={3} maxLength={1000} defaultValue={video?.description}/></label>
     <Choices label="Categories" name="categoryIds" entries={catalog.categories} selected={video?.categories||catalog.categories.filter(entry=>entry.name.toLowerCase()==='general')}/>
     <Choices label="Performers" name="performerIds" entries={catalog.performers} selected={video?.performers}/>
-    <Choices label="Tags" name="tagIds" entries={catalog.tags} selected={video?.tags}/>
+    <TagChoices entries={catalog.tags} selected={video?.tags}/>
     <label className="admin-check"><input name="premium" type="checkbox" defaultChecked={!!video?.premium}/>Premium members only</label>
     <button className="admin-button" disabled={busy}>{busy?'Saving…':video?'Save video':'Publish video'}</button>
     {video&&<button className="admin-secondary" type="button" onClick={onCancel}>Cancel editing</button>}
